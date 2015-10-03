@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <group android:checkableBehavior="none" >
+        <item
+            android:id="@+id/menu_drawer_home_myprofile"
+            android:icon="@drawable/ic_launcher"
+            android:title="@string/my_profile"/>
+        <item
+            android:id="@+id/menu_drawer_home_add_place"
+            android:icon="@drawable/ic_launcher"
+            android:title="@string/add_place"/>
+        <item
+            android:id="@+id/menu_drawer_home_myfavourites"
+            android:icon="@drawable/ic_launcher"
+            android:title="@string/my_favorites"/>
+        <item
+            android:id="@+id/menu_drawer_home_settings"
+            android:icon="@drawable/ic_launcher"
+            android:title="@string/settings"/>
+        <item
+            android:id="@+id/menu_drawer_home_aboutus"
+            android:icon="@drawable/ic_launcher"
+            android:title="@string/about_us"/>
+        <item
+            android:id="@+id/menu_drawer_home_help"
+            android:icon="@drawable/ic_launcher"
+            android:title="@string/help"/>
+    </group>
+
+</menu>
