@@ -14,5 +14,10 @@
     <string name="hello_user">Hello User</string>
     <string name="logout">Logout</string>
     <string name="waiting_for_location">Waiting for current location</string>
-
+    <string name="set_up_title">enter your details</string>
+    <string name="enter_user_id">Enter User Id</string>
+    <string name="add_college">Add College</string>
+    <string name="user_id_taken">User id Already Taken</string>
+    <string name="user_id_is_required">User id is required</string>
+    <string name="text_continue">Continue</string>
 </resources>
