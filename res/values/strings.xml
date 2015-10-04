@@ -14,10 +14,23 @@
     <string name="hello_user">Hello User</string>
     <string name="logout">Logout</string>
     <string name="waiting_for_location">Waiting for current location</string>
-    <string name="set_up_title">enter your details</string>
-    <string name="enter_user_id">Enter User Id</string>
+    <string name="set_up_title">Lets get Started</string>
+    <string name="enter_user_id">Email id</string>
+    <string name="enter_password">password</string>
     <string name="add_college">Add College</string>
+    <string name="dartmouth_student">I am a Dartmouth Student</string>
     <string name="user_id_taken">User id Already Taken</string>
     <string name="user_id_is_required">User id is required</string>
-    <string name="text_continue">Continue</string>
+    <string name="password_is_required">Really ?? \n you need a password</string>
+    <string name="password_min_8">Minimum 8 characters</string>
+    <string name="dartmouth_as">Dartmouth A and s</string>
+    <string name="thayer">Thayer</string>
+    <string name="geisel">Giesel</string>
+    <string name="tuck">Tuck</string>
+    <string name="submit">Start</string>
+    <string name="registering">Hold on ! we are about to start !! </string>
+    <string name="no_network">Network not available</string>
+    <string name="registration_success">Registration Successful</string>
+    <string name="registration_error">Error while registering</string>
+
 </resources>

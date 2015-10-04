@@ -4,12 +4,23 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
+    <ImageView
+        android:id="@+id/imgStartIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:padding="10dp"
+        android:src="@drawable/ic_launcher" />
+
     <TextView
         android:id="@+id/txtTitle"
         style="@style/TextAppearance.AppCompat.Headline"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/imgStartIcon"
         android:gravity="center_horizontal"
+        android:padding="5dp"
         android:text="@string/set_up_title" />
 
     <EditText
@@ -17,24 +28,73 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/txtTitle"
-        android:layout_marginTop="20dp"
-        android:hint="@string/enter_user_id" />
+        android:layout_marginTop="5dp"
+        android:hint="@string/enter_user_id"
+        android:inputType="textEmailAddress"
+        android:singleLine="true" />
 
-    <TextView
-        android:id="@+id/btnAddYourCollege"
+    <EditText
+        android:id="@+id/edtPassword"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/edtUserName"
-        android:drawableRight="@drawable/ic_add"
+        android:layout_marginTop="5dp"
+        android:hint="@string/enter_password"
+        android:inputType="textPassword"
+        android:singleLine="true" />
+
+    <CheckBox
+        android:id="@+id/chkAddYourCollege"
+        style="@style/TextAppearance.AppCompat.Body2"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/edtPassword"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="5dp"
         android:gravity="center_vertical"
-        android:hint="@string/add_college"
+        android:hint="@string/dartmouth_student"
         android:padding="5dp" />
 
+    <RadioGroup
+        android:id="@+id/rgSchoolPicker"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/chkAddYourCollege"
+        android:checkedButton="@+id/rdAs"
+        android:orientation="vertical"
+        android:padding="5dp" >
+
+        <RadioButton
+            android:id="@+id/rdAs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dartmouth_as" />
+
+        <RadioButton
+            android:id="@+id/rdThayer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/thayer" />
+
+        <RadioButton
+            android:id="@+id/rdGeisel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/geisel" />
+
+        <RadioButton
+            android:id="@+id/rdTuck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tuck" />
+    </RadioGroup>
+
     <Button
-        android:id="@+id/btnContinue"
+        android:id="@+id/btnSubmit"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:hint="@string/text_continue" />
+        android:hint="@string/submit"
+        android:padding="8dp" />
 
 </RelativeLayout>
