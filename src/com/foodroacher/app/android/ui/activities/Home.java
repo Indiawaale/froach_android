@@ -8,6 +8,7 @@ import com.foodroacher.app.android.R;
 import com.foodroacher.app.android.app.FoodRoacherApp;
 import com.foodroacher.app.android.network.FoodEvents;
 import com.foodroacher.app.android.network.NetworkUtils;
+import com.foodroacher.app.android.utils.GCMClientManager;
 import com.foodroacher.app.android.utils.PreferenceUtils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -75,12 +76,16 @@ public class Home extends BaseActivity {
     private List<FoodEvents> mEvents = new ArrayList<FoodEvents>();
     private List<Marker> mEventsMarker = new ArrayList<Marker>();
     private HashMap<Marker, FoodEvents> mMarkerToEventMap = new HashMap<Marker, FoodEvents>();
+    private GCMClientManager pushClientManager;
+    String PROJECT_NUMBER = "700875766105";
+    private RegisterGCMTask mRegisterGcmTask = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         if (isUserRegisterd()) {
+            setUpPush();
             initViews();
             buildGoogleApiClient();
             cancelNotifications();
@@ -89,6 +94,38 @@ public class Home extends BaseActivity {
         }
     }
 
+    private void setUpPush(){
+            pushClientManager = new GCMClientManager(this, PROJECT_NUMBER);
+            pushClientManager.registerIfNeeded(new GCMClientManager.RegistrationCompletedHandler() {
+               @Override
+               public void onSuccess(String registrationId, boolean isNewRegistration) {
+                   FoodRoacherApp.showGenericToast(getBaseContext(), registrationId);
+                   // SEND async device registration to your back-end server 
+                   // linking user with device registration id
+                   // POST https://my-back-end.com/devices/register?user_id=123&device_id=abc
+                   
+                   registerGcmKeyToServer(registrationId);
+               }
+
+               
+
+            @Override
+               public void onFailure(String ex) {
+                 super.onFailure(ex);
+                 FoodRoacherApp.showGenericToast(getBaseContext(), "gcm failed");
+                 // If there is an error registering, don't just keep trying to register.
+                 // Require the user to click a button again, or perform
+                 // exponential back-off when retrying.
+               }
+            });
+
+        
+    }
+    private void registerGcmKeyToServer(String registrationId) {
+        mRegisterGcmTask = new RegisterGCMTask();
+        mRegisterGcmTask.execute(PreferenceUtils.getUserId(getBaseContext()),registrationId);
+        
+    }
     private boolean isUserRegisterd() {
         return PreferenceUtils.getUserId(getBaseContext()) != null && PreferenceUtils.isRegistered(getBaseContext());
     }
@@ -211,49 +248,30 @@ public class Home extends BaseActivity {
 
     }
 
-    private ResultCallback<LocationSettingsResult> mLocationResultCallback = new ResultCallback<LocationSettingsResult>() {
+    private ResultCallback<LocationSettingsResult> mLocationResultCallback=new ResultCallback<LocationSettingsResult>(){
 
-        @Override
-        public void onResult(LocationSettingsResult result) {
-            final Status status = result.getStatus();
-            final LocationSettingsStates states = result.getLocationSettingsStates();
-            switch (status.getStatusCode()) {
-                case LocationSettingsStatusCodes.SUCCESS:
-                    // All location settings are satisfied. The client can
-                    // initialize location
-                    // requests here.
-                    startRequestingLocationUpdates();
-                    break;
-                case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                    // Location settings are not satisfied. But could be fixed
-                    // by showing the user
-                    // a dialog.
-                    try {
-                        // Show the dialog by calling
-                        // startResolutionForResult(),
-                        // and check the result in onActivityResult().
-                        status.startResolutionForResult(Home.this, REQUEST_CHECK_LOCATION_SETTINGS);
-                    } catch (SendIntentException e) {
-                        // Ignore the error.
-                    }
-                    break;
-                case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                    // Location settings are not satisfied. However, we have no
-                    // way to fix the
-                    // settings so we won't show the dialog.
-                    break;
-            }
-        }
-    };
-    private LocationListener mLocationListener = new LocationListener() {
+    @Override public void onResult(LocationSettingsResult result){final Status status=result.getStatus();final LocationSettingsStates states=result.getLocationSettingsStates();switch(status.getStatusCode()){case LocationSettingsStatusCodes.SUCCESS:
+    // All location settings are satisfied. The client can
+    // initialize location
+    // requests here.
+    startRequestingLocationUpdates();break;case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+    // Location settings are not satisfied. But could be fixed
+    // by showing the user
+    // a dialog.
+    try{
+    // Show the dialog by calling
+    // startResolutionForResult(),
+    // and check the result in onActivityResult().
+    status.startResolutionForResult(Home.this,REQUEST_CHECK_LOCATION_SETTINGS);}catch(SendIntentException e){
+    // Ignore the error.
+    }break;case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+    // Location settings are not satisfied. However, we have no
+    // way to fix the
+    // settings so we won't show the dialog.
+    break;}}};
+    private LocationListener mLocationListener=new LocationListener(){
 
-        @Override
-        public void onLocationChanged(Location changedLocation) {
-            mCurrentLocation = changedLocation;
-            updateCurrentLocationOnMap();
-            stopRequestingLocationUpdates();
-            fetchNewEvents(mCurrentLocation);
-        }
+    @Override public void onLocationChanged(Location changedLocation){mCurrentLocation=changedLocation;updateCurrentLocationOnMap();stopRequestingLocationUpdates();fetchNewEvents(mCurrentLocation);}
 
     };
 
@@ -266,54 +284,33 @@ public class Home extends BaseActivity {
         checkLocationServiceEnabled();
     }
 
-    private OnConnectionFailedListener mConnectionFailedCallback = new OnConnectionFailedListener() {
+    private OnConnectionFailedListener mConnectionFailedCallback=new OnConnectionFailedListener(){
 
-        @Override
-        public void onConnectionFailed(ConnectionResult arg0) {
-            onGoogleApiDisabled();
-        }
-    };
-    private ConnectionCallbacks mGoogleApiCallback = new ConnectionCallbacks() {
+    @Override public void onConnectionFailed(ConnectionResult arg0){onGoogleApiDisabled();}};
+    private ConnectionCallbacks mGoogleApiCallback=new ConnectionCallbacks(){
 
-        @Override
-        public void onConnectionSuspended(int arg0) {
-            onGoogleApiDisabled();
+    @Override public void onConnectionSuspended(int arg0){onGoogleApiDisabled();
 
-        }
+    }
 
-        @Override
-        public void onConnected(Bundle connectionHint) {
-            onGoogleApiEnabled(connectionHint);
+    @Override public void onConnected(Bundle connectionHint){onGoogleApiEnabled(connectionHint);
 
-        }
-    };
+    }};
 
-    private OnMapReadyCallback mOnMapReadyCallBack = new OnMapReadyCallback() {
+    private OnMapReadyCallback mOnMapReadyCallBack=new OnMapReadyCallback(){
 
-        @Override
-        public void onMapReady(GoogleMap googleMap) {
-            setupGoogleMap(googleMap);
-        }
+    @Override public void onMapReady(GoogleMap googleMap){setupGoogleMap(googleMap);}
 
     };
-    private OnInfoWindowClickListener mOnInfoWindowClickListener = new OnInfoWindowClickListener() {
+    private OnInfoWindowClickListener mOnInfoWindowClickListener=new OnInfoWindowClickListener(){
 
-        @Override
-        public void onInfoWindowClick(Marker marker) {
-            FoodEvents event = mMarkerToEventMap.get(marker);
-            FoodRoacherApp.showGenericToast(getBaseContext(), "infor window -> " + event.getTitle());
-            EventDetails.launchEventDetail(Home.this, event);
-        }
-    };
+    @Override public void onInfoWindowClick(Marker marker){FoodEvents event=mMarkerToEventMap.get(marker);FoodRoacherApp.showGenericToast(getBaseContext(),"infor window -> "+event.getTitle());EventDetails.launchEventDetail(Home.this,event);}};
 
-    private OnMyLocationButtonClickListener mOnMyLocationButtonClickListener = new OnMyLocationButtonClickListener() {
+    private OnMyLocationButtonClickListener mOnMyLocationButtonClickListener=new OnMyLocationButtonClickListener(){
 
-        @Override
-        public boolean onMyLocationButtonClick() {
-            // TODO Auto-generated method stub
-            return false;
-        }
-    };
+    @Override public boolean onMyLocationButtonClick(){
+    // TODO Auto-generated method stub
+    return false;}};
 
     private void initActionBar() {
         setUpToolbar();
@@ -339,55 +336,16 @@ public class Home extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private OnClickListener mOnClickListener = new OnClickListener() {
+    private OnClickListener mOnClickListener=new OnClickListener(){
 
-        @Override
-        public void onClick(View v) {
-            switch (v.getId()) {
-                case R.id.fabAddLocation:
-                    onClickAddPlace();
-                    break;
+    @Override public void onClick(View v){switch(v.getId()){case R.id.fabAddLocation:onClickAddPlace();break;
 
-                default:
-                    break;
-            }
+    default:break;}
 
-        }
-    };
-    private OnNavigationItemSelectedListener mNavigationSelectionListener = new OnNavigationItemSelectedListener() {
+    }};
+    private OnNavigationItemSelectedListener mNavigationSelectionListener=new OnNavigationItemSelectedListener(){
 
-        @Override
-        public boolean onNavigationItemSelected(MenuItem menuItem) {
-            boolean result = false;
-            switch (menuItem.getItemId()) {
-                case R.id.menu_drawer_home_myprofile:
-                    result = true;
-                    break;
-                case R.id.menu_drawer_home_add_place:
-                    onClickAddPlace();
-                    result = true;
-                    break;
-                case R.id.menu_drawer_home_myfavourites:
-                    result = true;
-                    break;
-                case R.id.menu_drawer_home_settings:
-                    result = true;
-                    break;
-                case R.id.menu_drawer_home_help:
-                    onClickHelp();
-                    result = true;
-                    break;
-                case R.id.menu_drawer_home_aboutus:
-                    onClickAboutUs();
-                    result = true;
-                    break;
-                default:
-                    break;
-            }
-            mDrawerLayout.closeDrawers();
-            return result;
-        }
-    };
+    @Override public boolean onNavigationItemSelected(MenuItem menuItem){boolean result=false;switch(menuItem.getItemId()){case R.id.menu_drawer_home_myprofile:result=true;break;case R.id.menu_drawer_home_add_place:onClickAddPlace();result=true;break;case R.id.menu_drawer_home_myfavourites:result=true;break;case R.id.menu_drawer_home_settings:result=true;break;case R.id.menu_drawer_home_help:onClickHelp();result=true;break;case R.id.menu_drawer_home_aboutus:onClickAboutUs();result=true;break;default:break;}mDrawerLayout.closeDrawers();return result;}};
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -483,9 +441,7 @@ public class Home extends BaseActivity {
         mMarkerToEventMap.clear();
         for (FoodEvents events : mEvents) {
             LatLng location = new LatLng(events.getLatitude(), events.getLongitude());
-            MarkerOptions markerOption = new MarkerOptions().position(location).
-                    title(events.getTitle())
-                    .snippet(events.getDescription());
+            MarkerOptions markerOption = new MarkerOptions().position(location).title(events.getTitle()).snippet(events.getDescription());
             Marker newMarker = mGoogleMap.addMarker(markerOption);
             mEventsMarker.add(newMarker);
             mMarkerToEventMap.put(newMarker, events);
@@ -528,6 +484,35 @@ public class Home extends BaseActivity {
         @Override
         protected void onCancelled() {
             dismissProgressDialog();
+            super.onCancelled();
+        }
+
+    }
+    private class RegisterGCMTask extends AsyncTask<String, Void, Boolean> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Boolean doInBackground(String... params) {
+            boolean result = NetworkUtils.registerUserGcm(getBaseContext(), params[0], params[1]);
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if (result) {
+               FoodRoacherApp.showGenericToast(getBaseContext(), "gcm registered success");
+            }else{
+               FoodRoacherApp.showGenericToast(getBaseContext(), "gcm registered fail");
+            }
+            PreferenceUtils.setGcmRegistered(getBaseContext(), result);
+            super.onPostExecute(result);
+        }
+
+        @Override
+        protected void onCancelled() {
             super.onCancelled();
         }
 

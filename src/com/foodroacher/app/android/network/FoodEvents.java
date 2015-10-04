@@ -44,8 +44,8 @@ public final class FoodEvents implements Serializable {
      this.longitude= json.getDouble(JSON_KEY_LONGITUDE);
      this.startTime= json.getLong(JSON_KEY_START_TIME);
      this.endTime= json.getLong(JSON_KEY_END_TIME);
-     this.title= json.getString(JSON_KEY_TITLE);
-     this.description= json.getString(JSON_KEY_DESCRIPTION);
+     this.title= json.getString(JSON_KEY_TITLE).trim();
+     this.description= json.getString(JSON_KEY_DESCRIPTION).trim();
     }
     
     public FoodEvents(long id, double latitude, double longitude, long startTime, long endTime, String title, String description) {

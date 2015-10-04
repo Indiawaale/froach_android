@@ -29,6 +29,7 @@ import android.net.NetworkInfo;
 public final class NetworkUtils {
     public static final String BASE_URL = "http://foodroach.cloudapp.net";
     public static final String REGISTER_API = "/register";
+    public static final String REGISTER_GCM_API = "/gcm";
     public static final String LOCATION_API = "/location";
     public static final String QUERY_START = "?";
     public static final String EQUAL = "=";
@@ -40,6 +41,8 @@ public final class NetworkUtils {
     public static final String KEY_LAT = "lat";
     public static final String KEY_LONG = "long";
     public static final String KEY_EVENTS = "hits";
+    public static final String KEY_GCM = "gcm";
+
 
 
     public static boolean isNetworkConnected(Context context) {
@@ -61,6 +64,21 @@ public final class NetworkUtils {
         try {
             if(downloadUrl(url) != null){
                 result = new RegistrationResult(email);
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return result;
+    }
+    public static boolean registerUserGcm(Context context, String email, String gcmKey) {
+        boolean result = false ;
+        String url = BASE_URL + REGISTER_GCM_API + QUERY_START +
+                     KEY_USER + EQUAL + email + AND +  
+                     KEY_GCM + EQUAL + gcmKey ;
+        try {
+            if(downloadUrl(url) != null){
+                result = true;
             }
         } catch (IOException e) {
             // TODO Auto-generated catch block

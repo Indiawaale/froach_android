@@ -15,33 +15,39 @@
         android:id="@+id/rlAddPlaceContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="5" >
+        android:layout_weight="3" >
 
         <TextView
             android:id="@+id/txtEventName"
+            style="@style/TextAppearance.AppCompat.Headline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:ellipsize="end"
             android:maxLines="2"
+            android:padding="5dp"
             android:text="Event name" />
 
         <TextView
             android:id="@+id/txtEventDetails"
+            style="@style/TextAppearance.AppCompat.Subhead"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/txtEventName"
             android:ellipsize="end"
             android:maxLines="3"
+            android:padding="5dp"
             android:text="Event Details" />
 
         <TextView
             android:id="@+id/txtTime"
+            style="@style/TextAppearance.AppCompat.Body1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/txtEventDetails"
             android:ellipsize="end"
             android:maxLines="3"
+            android:padding="5dp"
             android:text="Time" />
 
         <include
@@ -58,7 +64,7 @@
         android:id="@+id/flMapContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="4" >
+        android:layout_weight="6" >
     </FrameLayout>
 
 </LinearLayout>

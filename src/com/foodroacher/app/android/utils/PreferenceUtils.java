@@ -8,6 +8,7 @@ public final class PreferenceUtils {
 
     private static final String PREFS_KEY_USER = "userid";
     private static final String PREFS_KEY_IS_REGISTERED = "is_registered";
+    private static final String PREFS_KEY_IS_GCM_REGISTERED = "is_GCM_registered";
 
     public static boolean saveUser(Context context, String userId){
         SharedPreferences sharedPref = context.getSharedPreferences(PREFS_APP,Context.MODE_PRIVATE);
@@ -30,5 +31,16 @@ public final class PreferenceUtils {
     public static boolean isRegistered(Context context){
         SharedPreferences sharedPref = context.getSharedPreferences(PREFS_APP,Context.MODE_PRIVATE);
         return sharedPref.getBoolean(PREFS_KEY_IS_REGISTERED, false);
+    }
+    public static boolean setGcmRegistered(Context context, boolean isRegistered){
+        SharedPreferences sharedPref = context.getSharedPreferences(PREFS_APP,Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putBoolean(PREFS_KEY_IS_GCM_REGISTERED,isRegistered);
+        return editor.commit();
+    }
+    
+    public static boolean isGcmRegistered(Context context){
+        SharedPreferences sharedPref = context.getSharedPreferences(PREFS_APP,Context.MODE_PRIVATE);
+        return sharedPref.getBoolean(PREFS_KEY_IS_GCM_REGISTERED, false);
     }
 }
