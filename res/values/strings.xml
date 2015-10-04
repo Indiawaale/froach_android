@@ -32,5 +32,7 @@
     <string name="no_network">Network not available</string>
     <string name="registration_success">Registration Successful</string>
     <string name="registration_error">Error while registering</string>
+    <string name="events_success">Fetched Events</string>
+    <string name="events_error">Events Error</string>
 
 </resources>

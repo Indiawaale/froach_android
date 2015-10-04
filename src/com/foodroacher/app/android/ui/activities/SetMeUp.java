@@ -6,6 +6,7 @@ import com.foodroacher.app.android.network.NetworkUtils;
 import com.foodroacher.app.android.network.RegistrationResult;
 import com.foodroacher.app.android.ui.fragments.SetMeUpFragment;
 import com.foodroacher.app.android.ui.fragments.SetMeUpFragment.OnClickSubmitListener;
+import com.foodroacher.app.android.utils.PreferenceUtils;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -40,8 +41,14 @@ public class SetMeUp extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_set_up);
-        initViews();
+        if(!PreferenceUtils.isRegistered(getBaseContext())){
+            setContentView(R.layout.activity_set_up);
+            initViews();
+        }else{
+            Home.launchHome(SetMeUp.this);
+            finish();
+        }
+        
     }
 
     private void initViews() {
@@ -79,8 +86,14 @@ public class SetMeUp extends BaseActivity {
     }
 
     private void onRegistrationSuccess(RegistrationResult result) {
-        FoodRoacherApp.showGenericToast(getBaseContext(), getString(R.string.registration_success));
-
+        if(result!=null){
+            FoodRoacherApp.showGenericToast(getBaseContext(), getString(R.string.registration_success));
+            PreferenceUtils.saveUser(getBaseContext(), result.getAuthKey());
+            finish();
+            Home.launchHome(SetMeUp.this);
+        }else{
+            showRegistrationError();
+        }
     }
 
     private void showRegistrationError() {

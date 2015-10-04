@@ -1,7 +1,14 @@
 package com.foodroacher.app.android.ui.activities;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import com.foodroacher.app.android.R;
 import com.foodroacher.app.android.app.FoodRoacherApp;
+import com.foodroacher.app.android.network.FoodEvents;
+import com.foodroacher.app.android.network.NetworkUtils;
+import com.foodroacher.app.android.utils.PreferenceUtils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
@@ -18,18 +25,22 @@ import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -37,14 +48,13 @@ import android.support.design.widget.NavigationView.OnNavigationItemSelectedList
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 
-public class Home extends AppCompatActivity {
+public class Home extends BaseActivity {
 
     private static final int REQUEST_CHECK_LOCATION_SETTINGS = 101;
     private SupportMapFragment mMapFragment = null;
@@ -59,14 +69,26 @@ public class Home extends AppCompatActivity {
     private DrawerLayout mDrawerLayout = null;
     private NavigationView mNavigationView = null;
     private FloatingActionButton mFabNewOrder = null;
+    private GetEventsTask mEventsTask = null;
+    private List<FoodEvents> mEvents = new ArrayList<FoodEvents>();
+    private List<Marker> mEventsMarker = new ArrayList<Marker>();
+    private HashMap<Marker, FoodEvents> mMarkerToEventMap = new HashMap<Marker, FoodEvents>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        initViews();
-        buildGoogleApiClient();
-        cancelNotifications();
+        if (isUserRegisterd()) {
+            initViews();
+            buildGoogleApiClient();
+            cancelNotifications();
+        } else {
+            FoodRoacherApp.showGenericToast(getBaseContext(), getString(R.string.registration_error));
+        }
+    }
+
+    private boolean isUserRegisterd() {
+        return PreferenceUtils.getUserId(getBaseContext()) != null && PreferenceUtils.isRegistered(getBaseContext());
     }
 
     private void cancelNotifications() {
@@ -111,6 +133,7 @@ public class Home extends AppCompatActivity {
         mGoogleMap = googleMap;
         mGoogleMap.setMyLocationEnabled(true);
         mGoogleMap.setOnMyLocationButtonClickListener(mOnMyLocationButtonClickListener);
+        mGoogleMap.setOnInfoWindowClickListener(mOnInfoWindowClickListener);
     }
 
     private void setUpToolbar() {
@@ -138,8 +161,8 @@ public class Home extends AppCompatActivity {
     private void createLocationRequest() {
         if (mLocationRequest == null) {
             mLocationRequest = new LocationRequest();
-            mLocationRequest.setInterval(1000);
-            mLocationRequest.setFastestInterval(5000);
+            mLocationRequest.setInterval(15000);
+            mLocationRequest.setFastestInterval(15000);
             mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         }
     }
@@ -174,6 +197,15 @@ public class Home extends AppCompatActivity {
             mGoogleMap.addMarker(mCurrentLocationMarker);
             mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(clickedLocation, 18.0f), 1000, null);
         }
+
+    }
+
+    private void fetchNewEvents(Location mCurrentLocation) {
+        if (mEventsTask != null && !mEventsTask.isCancelled()) {
+            return;
+        }
+        mEventsTask = new GetEventsTask();
+        mEventsTask.execute(PreferenceUtils.getUserId(getBaseContext()), Double.toString(mCurrentLocation.getLatitude()), Double.toString(mCurrentLocation.getLongitude()));
 
     }
 
@@ -217,7 +249,10 @@ public class Home extends AppCompatActivity {
         public void onLocationChanged(Location changedLocation) {
             mCurrentLocation = changedLocation;
             updateCurrentLocationOnMap();
+            stopRequestingLocationUpdates();
+            fetchNewEvents(mCurrentLocation);
         }
+
     };
 
     private void onGoogleApiDisabled() {
@@ -258,6 +293,14 @@ public class Home extends AppCompatActivity {
             setupGoogleMap(googleMap);
         }
 
+    };
+    private OnInfoWindowClickListener mOnInfoWindowClickListener = new OnInfoWindowClickListener() {
+
+        @Override
+        public void onInfoWindowClick(Marker marker) {
+            FoodEvents event = mMarkerToEventMap.get(marker);
+            FoodRoacherApp.showGenericToast(getBaseContext(), "infor window");
+        }
     };
 
     private OnMyLocationButtonClickListener mOnMyLocationButtonClickListener = new OnMyLocationButtonClickListener() {
@@ -369,10 +412,10 @@ public class Home extends AppCompatActivity {
             default:
                 break;
         }
-
     }
 
     private void onClickAboutUs() {
+
         AboutUs.launchAboutUs(this);
     }
 
@@ -413,4 +456,71 @@ public class Home extends AppCompatActivity {
 
     }
 
+    public static void launchHome(Activity context) {
+        Intent homeIntent = new Intent(context, Home.class);
+        context.startActivity(homeIntent);
+    }
+
+    private void onGetEventsResult(List<FoodEvents> result) {
+        if (result != null) {
+            FoodRoacherApp.showGenericToast(getBaseContext(), getString(R.string.events_success));
+            mEvents.clear();
+            mEvents.addAll(result);
+            updateEventsOnMap();
+        } else {
+            showFetchEventsError();
+        }
+    }
+
+    private void updateEventsOnMap() {
+        mGoogleMap.clear();
+        mEventsMarker.clear();
+        mMarkerToEventMap.clear();
+        for (FoodEvents events : mEvents) {
+            LatLng location = new LatLng(events.getLatitude(), events.getLongitude());
+            MarkerOptions markerOption = new MarkerOptions().position(location).
+                    title(events.getTitle())
+                    .snippet(events.getDescription());
+            Marker newMarker = mGoogleMap.addMarker(markerOption);
+            mEventsMarker.add(newMarker);
+            mMarkerToEventMap.put(newMarker, events);
+        }
+        mGoogleMap.setOnInfoWindowClickListener(mOnInfoWindowClickListener);
+    }
+
+    private void showFetchEventsError() {
+        FoodRoacherApp.showGenericToast(getBaseContext(), getString(R.string.events_error));
+    }
+
+    private class GetEventsTask extends AsyncTask<String, Void, List<FoodEvents>> {
+        @Override
+        protected void onPreExecute() {
+            showProgressDialog(getString(R.string.registering), false);
+            super.onPreExecute();
+        }
+
+        @Override
+        protected List<FoodEvents> doInBackground(String... params) {
+            List<FoodEvents> result = NetworkUtils.getFoodEvents(getBaseContext(), params[0], params[1], params[2]);
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(List<FoodEvents> result) {
+            dismissProgressDialog();
+            if (result != null) {
+                onGetEventsResult(result);
+            } else {
+                showFetchEventsError();
+            }
+            super.onPostExecute(result);
+        }
+
+        @Override
+        protected void onCancelled() {
+            dismissProgressDialog();
+            super.onCancelled();
+        }
+
+    }
 }
