@@ -1,17 +1,29 @@
 package com.foodroacher.app.android.services;
 
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.foodroacher.app.android.R;
+import com.foodroacher.app.android.app.FoodRoacherApp;
 import com.foodroacher.app.android.network.FoodEvents;
 import com.foodroacher.app.android.ui.activities.EventDetails;
+import com.foodroacher.app.android.utils.MSBandUtils;
 import com.google.android.gms.gcm.GcmListenerService;
+import com.microsoft.band.BandIOException;
+import com.microsoft.band.notifications.MessageFlags;
+import com.microsoft.band.tiles.BandTile;
+import com.microsoft.band.tiles.pages.BarcodeType;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 
@@ -36,8 +48,7 @@ public class GcmMessageHandler extends GcmListenerService {
         } catch (JSONException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -60,7 +71,20 @@ public class GcmMessageHandler extends GcmListenerService {
     }
 
     private void notifyMyWatch(FoodEvents event) {
-        // TODO Auto-generated method stub
+        try {
+            if (MSBandUtils.isConnected(getBaseContext())) {
+                MSBandUtils.getBandClient(getBaseContext()).getNotificationManager().sendMessage(MSBandUtils.tileId, event.getTitle(), event.getDescription(),new Date(),MessageFlags.SHOW_DIALOG);
+            }
+        } catch (BandIOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    private void addTile() {
 
     }
 

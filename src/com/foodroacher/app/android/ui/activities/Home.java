@@ -9,6 +9,7 @@ import com.foodroacher.app.android.app.FoodRoacherApp;
 import com.foodroacher.app.android.network.FoodEvents;
 import com.foodroacher.app.android.network.NetworkUtils;
 import com.foodroacher.app.android.utils.GCMClientManager;
+import com.foodroacher.app.android.utils.MSBandUtils;
 import com.foodroacher.app.android.utils.PreferenceUtils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -36,12 +37,24 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.microsoft.band.BandException;
+import com.microsoft.band.tiles.BandTile;
+import com.microsoft.band.tiles.pages.Barcode;
+import com.microsoft.band.tiles.pages.BarcodeType;
+import com.microsoft.band.tiles.pages.FlowPanel;
+import com.microsoft.band.tiles.pages.FlowPanelOrientation;
+import com.microsoft.band.tiles.pages.PageLayout;
+import com.microsoft.band.tiles.pages.TextBlock;
+import com.microsoft.band.tiles.pages.TextBlockFont;
 
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -84,6 +97,7 @@ public class Home extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+//        runAddTile();
         if (isUserRegisterd()) {
             setUpPush();
             initViews();
@@ -94,38 +108,39 @@ public class Home extends BaseActivity {
         }
     }
 
-    private void setUpPush(){
-            pushClientManager = new GCMClientManager(this, PROJECT_NUMBER);
-            pushClientManager.registerIfNeeded(new GCMClientManager.RegistrationCompletedHandler() {
-               @Override
-               public void onSuccess(String registrationId, boolean isNewRegistration) {
-                   FoodRoacherApp.showGenericToast(getBaseContext(), registrationId);
-                   // SEND async device registration to your back-end server 
-                   // linking user with device registration id
-                   // POST https://my-back-end.com/devices/register?user_id=123&device_id=abc
-                   
-                   registerGcmKeyToServer(registrationId);
-               }
+    private void setUpPush() {
+        pushClientManager = new GCMClientManager(this, PROJECT_NUMBER);
+        pushClientManager.registerIfNeeded(new GCMClientManager.RegistrationCompletedHandler() {
+            @Override
+            public void onSuccess(String registrationId, boolean isNewRegistration) {
+                FoodRoacherApp.showGenericToast(getBaseContext(), registrationId);
+                // SEND async device registration to your back-end server
+                // linking user with device registration id
+                // POST
+                // https://my-back-end.com/devices/register?user_id=123&device_id=abc
 
-               
+                registerGcmKeyToServer(registrationId);
+            }
 
             @Override
-               public void onFailure(String ex) {
-                 super.onFailure(ex);
-                 FoodRoacherApp.showGenericToast(getBaseContext(), "gcm failed");
-                 // If there is an error registering, don't just keep trying to register.
-                 // Require the user to click a button again, or perform
-                 // exponential back-off when retrying.
-               }
-            });
+            public void onFailure(String ex) {
+                super.onFailure(ex);
+                FoodRoacherApp.showGenericToast(getBaseContext(), "gcm failed");
+                // If there is an error registering, don't just keep trying to
+                // register.
+                // Require the user to click a button again, or perform
+                // exponential back-off when retrying.
+            }
+        });
 
-        
     }
+
     private void registerGcmKeyToServer(String registrationId) {
         mRegisterGcmTask = new RegisterGCMTask();
-        mRegisterGcmTask.execute(PreferenceUtils.getUserId(getBaseContext()),registrationId);
-        
+        mRegisterGcmTask.execute(PreferenceUtils.getUserId(getBaseContext()), registrationId);
+
     }
+
     private boolean isUserRegisterd() {
         return PreferenceUtils.getUserId(getBaseContext()) != null && PreferenceUtils.isRegistered(getBaseContext());
     }
@@ -248,30 +263,49 @@ public class Home extends BaseActivity {
 
     }
 
-    private ResultCallback<LocationSettingsResult> mLocationResultCallback=new ResultCallback<LocationSettingsResult>(){
+    private ResultCallback<LocationSettingsResult> mLocationResultCallback = new ResultCallback<LocationSettingsResult>() {
 
-    @Override public void onResult(LocationSettingsResult result){final Status status=result.getStatus();final LocationSettingsStates states=result.getLocationSettingsStates();switch(status.getStatusCode()){case LocationSettingsStatusCodes.SUCCESS:
-    // All location settings are satisfied. The client can
-    // initialize location
-    // requests here.
-    startRequestingLocationUpdates();break;case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-    // Location settings are not satisfied. But could be fixed
-    // by showing the user
-    // a dialog.
-    try{
-    // Show the dialog by calling
-    // startResolutionForResult(),
-    // and check the result in onActivityResult().
-    status.startResolutionForResult(Home.this,REQUEST_CHECK_LOCATION_SETTINGS);}catch(SendIntentException e){
-    // Ignore the error.
-    }break;case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-    // Location settings are not satisfied. However, we have no
-    // way to fix the
-    // settings so we won't show the dialog.
-    break;}}};
-    private LocationListener mLocationListener=new LocationListener(){
+        @Override
+        public void onResult(LocationSettingsResult result) {
+            final Status status = result.getStatus();
+            final LocationSettingsStates states = result.getLocationSettingsStates();
+            switch (status.getStatusCode()) {
+                case LocationSettingsStatusCodes.SUCCESS:
+                    // All location settings are satisfied. The client can
+                    // initialize location
+                    // requests here.
+                    startRequestingLocationUpdates();
+                    break;
+                case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                    // Location settings are not satisfied. But could be fixed
+                    // by showing the user
+                    // a dialog.
+                    try {
+                        // Show the dialog by calling
+                        // startResolutionForResult(),
+                        // and check the result in onActivityResult().
+                        status.startResolutionForResult(Home.this, REQUEST_CHECK_LOCATION_SETTINGS);
+                    } catch (SendIntentException e) {
+                        // Ignore the error.
+                    }
+                    break;
+                case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                    // Location settings are not satisfied. However, we have no
+                    // way to fix the
+                    // settings so we won't show the dialog.
+                    break;
+            }
+        }
+    };
+    private LocationListener mLocationListener = new LocationListener() {
 
-    @Override public void onLocationChanged(Location changedLocation){mCurrentLocation=changedLocation;updateCurrentLocationOnMap();stopRequestingLocationUpdates();fetchNewEvents(mCurrentLocation);}
+        @Override
+        public void onLocationChanged(Location changedLocation) {
+            mCurrentLocation = changedLocation;
+            updateCurrentLocationOnMap();
+            stopRequestingLocationUpdates();
+            fetchNewEvents(mCurrentLocation);
+        }
 
     };
 
@@ -284,33 +318,54 @@ public class Home extends BaseActivity {
         checkLocationServiceEnabled();
     }
 
-    private OnConnectionFailedListener mConnectionFailedCallback=new OnConnectionFailedListener(){
+    private OnConnectionFailedListener mConnectionFailedCallback = new OnConnectionFailedListener() {
 
-    @Override public void onConnectionFailed(ConnectionResult arg0){onGoogleApiDisabled();}};
-    private ConnectionCallbacks mGoogleApiCallback=new ConnectionCallbacks(){
+        @Override
+        public void onConnectionFailed(ConnectionResult arg0) {
+            onGoogleApiDisabled();
+        }
+    };
+    private ConnectionCallbacks mGoogleApiCallback = new ConnectionCallbacks() {
 
-    @Override public void onConnectionSuspended(int arg0){onGoogleApiDisabled();
+        @Override
+        public void onConnectionSuspended(int arg0) {
+            onGoogleApiDisabled();
 
-    }
+        }
 
-    @Override public void onConnected(Bundle connectionHint){onGoogleApiEnabled(connectionHint);
+        @Override
+        public void onConnected(Bundle connectionHint) {
+            onGoogleApiEnabled(connectionHint);
 
-    }};
+        }
+    };
 
-    private OnMapReadyCallback mOnMapReadyCallBack=new OnMapReadyCallback(){
+    private OnMapReadyCallback mOnMapReadyCallBack = new OnMapReadyCallback() {
 
-    @Override public void onMapReady(GoogleMap googleMap){setupGoogleMap(googleMap);}
+        @Override
+        public void onMapReady(GoogleMap googleMap) {
+            setupGoogleMap(googleMap);
+        }
 
     };
-    private OnInfoWindowClickListener mOnInfoWindowClickListener=new OnInfoWindowClickListener(){
+    private OnInfoWindowClickListener mOnInfoWindowClickListener = new OnInfoWindowClickListener() {
 
-    @Override public void onInfoWindowClick(Marker marker){FoodEvents event=mMarkerToEventMap.get(marker);FoodRoacherApp.showGenericToast(getBaseContext(),"infor window -> "+event.getTitle());EventDetails.launchEventDetail(Home.this,event);}};
+        @Override
+        public void onInfoWindowClick(Marker marker) {
+            FoodEvents event = mMarkerToEventMap.get(marker);
+            FoodRoacherApp.showGenericToast(getBaseContext(), "infor window -> " + event.getTitle());
+            EventDetails.launchEventDetail(Home.this, event);
+        }
+    };
 
-    private OnMyLocationButtonClickListener mOnMyLocationButtonClickListener=new OnMyLocationButtonClickListener(){
+    private OnMyLocationButtonClickListener mOnMyLocationButtonClickListener = new OnMyLocationButtonClickListener() {
 
-    @Override public boolean onMyLocationButtonClick(){
-    // TODO Auto-generated method stub
-    return false;}};
+        @Override
+        public boolean onMyLocationButtonClick() {
+            // TODO Auto-generated method stub
+            return false;
+        }
+    };
 
     private void initActionBar() {
         setUpToolbar();
@@ -336,16 +391,55 @@ public class Home extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private OnClickListener mOnClickListener=new OnClickListener(){
+    private OnClickListener mOnClickListener = new OnClickListener() {
 
-    @Override public void onClick(View v){switch(v.getId()){case R.id.fabAddLocation:onClickAddPlace();break;
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.fabAddLocation:
+                    onClickAddPlace();
+                    break;
 
-    default:break;}
+                default:
+                    break;
+            }
 
-    }};
-    private OnNavigationItemSelectedListener mNavigationSelectionListener=new OnNavigationItemSelectedListener(){
+        }
+    };
+    private OnNavigationItemSelectedListener mNavigationSelectionListener = new OnNavigationItemSelectedListener() {
 
-    @Override public boolean onNavigationItemSelected(MenuItem menuItem){boolean result=false;switch(menuItem.getItemId()){case R.id.menu_drawer_home_myprofile:result=true;break;case R.id.menu_drawer_home_add_place:onClickAddPlace();result=true;break;case R.id.menu_drawer_home_myfavourites:result=true;break;case R.id.menu_drawer_home_settings:result=true;break;case R.id.menu_drawer_home_help:onClickHelp();result=true;break;case R.id.menu_drawer_home_aboutus:onClickAboutUs();result=true;break;default:break;}mDrawerLayout.closeDrawers();return result;}};
+        @Override
+        public boolean onNavigationItemSelected(MenuItem menuItem) {
+            boolean result = false;
+            switch (menuItem.getItemId()) {
+                case R.id.menu_drawer_home_myprofile:
+                    result = true;
+                    break;
+                case R.id.menu_drawer_home_add_place:
+                    onClickAddPlace();
+                    result = true;
+                    break;
+                case R.id.menu_drawer_home_myfavourites:
+                    result = true;
+                    break;
+                case R.id.menu_drawer_home_settings:
+                    result = true;
+                    break;
+                case R.id.menu_drawer_home_help:
+                    onClickHelp();
+                    result = true;
+                    break;
+                case R.id.menu_drawer_home_aboutus:
+                    onClickAboutUs();
+                    result = true;
+                    break;
+                default:
+                    break;
+            }
+            mDrawerLayout.closeDrawers();
+            return result;
+        }
+    };
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -451,6 +545,7 @@ public class Home extends BaseActivity {
         CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
         mGoogleMap.setOnInfoWindowClickListener(mOnInfoWindowClickListener);
         mGoogleMap.animateCamera(cu, 1000, null);
+        runAddTile();
     }
 
     private void showFetchEventsError() {
@@ -488,6 +583,7 @@ public class Home extends BaseActivity {
         }
 
     }
+
     private class RegisterGCMTask extends AsyncTask<String, Void, Boolean> {
         @Override
         protected void onPreExecute() {
@@ -503,9 +599,9 @@ public class Home extends BaseActivity {
         @Override
         protected void onPostExecute(Boolean result) {
             if (result) {
-               FoodRoacherApp.showGenericToast(getBaseContext(), "gcm registered success");
-            }else{
-               FoodRoacherApp.showGenericToast(getBaseContext(), "gcm registered fail");
+                FoodRoacherApp.showGenericToast(getBaseContext(), "gcm registered success");
+            } else {
+                FoodRoacherApp.showGenericToast(getBaseContext(), "gcm registered fail");
             }
             PreferenceUtils.setGcmRegistered(getBaseContext(), result);
             super.onPostExecute(result);
@@ -516,5 +612,60 @@ public class Home extends BaseActivity {
             super.onCancelled();
         }
 
+    }
+    private void runAddTile(){
+        new AddTileToBandTask().execute();
+    }
+    private boolean addTile() throws Exception {
+        if (MSBandUtils.doesTileExist(FoodRoacherApp.getApp(getBaseContext()).getClient().getTileManager().getTiles().await(), MSBandUtils.tileId)) {
+            return true;
+        }
+        /* Set the options */
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        Bitmap tileIcon = BitmapFactory.decodeResource(getBaseContext().getResources(), R.drawable.ic_launcher, options);
+        BandTile tile = new BandTile.Builder(MSBandUtils.tileId, "Barcode Tile", tileIcon)
+                .setPageLayouts(createBarcodeLayout(BarcodeType.CODE39), createBarcodeLayout(BarcodeType.PDF417)).build();
+        if (FoodRoacherApp.getApp(getBaseContext()).getClient().getTileManager().addTile(this, tile).await()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private PageLayout createBarcodeLayout(BarcodeType type) {
+        return new PageLayout(new FlowPanel(15, 0, 245, 105, FlowPanelOrientation.VERTICAL).addElements(new Barcode(0, 0, 221, 70, type).setId(11).setMargins(3, 0, 0, 0))
+                .addElements(new TextBlock(0, 0, 230, 30, TextBlockFont.SMALL, 0).setId(21).setColor(Color.RED)));
+    }
+    private class AddTileToBandTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                Thread.sleep(2000);
+                addTile();
+            } catch (BandException e) {
+                String exceptionMessage="";
+                switch (e.getErrorType()) {
+                case DEVICE_ERROR:
+                    exceptionMessage = "Please make sure bluetooth is on and the band is in range.";
+                    break;
+                case UNSUPPORTED_SDK_VERSION_ERROR:
+                    exceptionMessage = "Microsoft Health BandService doesn't support your SDK Version. Please update to latest SDK.";
+                    break;
+                case SERVICE_ERROR:
+                    exceptionMessage = "Microsoft Health BandService is not available. Please make sure Microsoft Health is installed and that you have the correct permissions.";
+                    break;
+                case BAND_FULL_ERROR:
+                    exceptionMessage = "Band is full. Please use Microsoft Health to remove a tile.";
+                    break;
+                default:
+                    exceptionMessage = "Unknown error occured: " + e.getMessage();
+                    break;
+                }
+            } catch (Exception e) {
+            } 
+            return null;
+        }
     }
 }

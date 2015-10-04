@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">foodRoacher</string>
-    <string name="title_activity_vendor_home">Food Roacher</string>
+    <string name="title_activity_vendor_home">foodRoach</string>
     <string name="title_activity_time_picker">Pick time</string>
     <string name="settings">Settings</string>
     <string name="about_us">About us</string>
