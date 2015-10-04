@@ -10,9 +10,11 @@
     <string name="add_place">Add Place</string>
     <string name="my_favorites">My Favourites</string>
     <string name="help">Help</string>
+    <string name="event_details">Event details</string>
     <string name="Logout">Logout</string>
     <string name="hello_user">Hello User</string>
     <string name="logout">Logout</string>
+    <string name="share">Share</string>
     <string name="waiting_for_location">Waiting for current location</string>
     <string name="set_up_title">Lets get Started</string>
     <string name="enter_user_id">Email id</string>
@@ -34,5 +36,6 @@
     <string name="registration_error">Error while registering</string>
     <string name="events_success">Fetched Events</string>
     <string name="events_error">Events Error</string>
+    <string name="share_using">Share using</string>
 
 </resources>

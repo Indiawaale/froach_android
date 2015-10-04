@@ -4,7 +4,7 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="11"
         android:targetSdkVersion="23" />
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -50,6 +50,11 @@
         <activity
             android:name=".ui.activities.Help"
             android:label="@string/help"
+            android:theme="@style/BaseActivity" >
+        </activity>
+        <activity
+            android:name=".ui.activities.EventDetails"
+            android:label="@string/event_details"
             android:theme="@style/BaseActivity" >
         </activity>
     </application>

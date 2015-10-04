@@ -301,7 +301,8 @@ public class Home extends BaseActivity {
         @Override
         public void onInfoWindowClick(Marker marker) {
             FoodEvents event = mMarkerToEventMap.get(marker);
-            FoodRoacherApp.showGenericToast(getBaseContext(), "infor window");
+            FoodRoacherApp.showGenericToast(getBaseContext(), "infor window -> " + event.getTitle());
+            EventDetails.launchEventDetail(Home.this, event);
         }
     };
 
