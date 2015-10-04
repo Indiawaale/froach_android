@@ -23,6 +23,7 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
@@ -31,6 +32,7 @@ import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -473,6 +475,8 @@ public class Home extends BaseActivity {
     }
 
     private void updateEventsOnMap() {
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        int padding = 50; // offset from edges of the map in pixels
         mGoogleMap.clear();
         mEventsMarker.clear();
         mMarkerToEventMap.clear();
@@ -484,8 +488,12 @@ public class Home extends BaseActivity {
             Marker newMarker = mGoogleMap.addMarker(markerOption);
             mEventsMarker.add(newMarker);
             mMarkerToEventMap.put(newMarker, events);
+            builder.include(newMarker.getPosition());
         }
+        LatLngBounds bounds = builder.build();
+        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
         mGoogleMap.setOnInfoWindowClickListener(mOnInfoWindowClickListener);
+        mGoogleMap.animateCamera(cu, 1000, null);
     }
 
     private void showFetchEventsError() {
